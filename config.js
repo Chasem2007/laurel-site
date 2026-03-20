@@ -11,7 +11,7 @@
 // ============================================================
 
 const SUPABASE_URL  = "https://mtsuxvxipmiiqyznjvry.supabase.co";
-const SUPABASE_ANON = "sb_secret_L1eok7lwyyxWLII2FMa1jg_frTUYXfD";
+const SUPABASE_ANON = "sb_publishable_9Pw9vq16L50v5BQSMdfGCw_SbdOzHRj";
 
 // ── Countdown dates ──────────────────────────────────────────
 // Format: "YYYY-MM-DDTHH:MM:SS"  (24-hour, local school time)
