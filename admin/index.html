@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — Laurel High School</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --purple:#4B0082; --purple-dark:#2d004d; --gold:#F5A800; --white:#ffffff;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{min-height:100vh;background:var(--purple-dark);display:flex;flex-direction:column;font-family:'Barlow',sans-serif;overflow:hidden;}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(-25deg,transparent,transparent 60px,rgba(75,0,130,.2) 60px,rgba(75,0,130,.2) 62px);pointer-events:none;}
+    .rail-top{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent);z-index:100;}
+    .back-link{position:fixed;top:20px;left:24px;color:rgba(255,255,255,.4);text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;transition:color .2s;z-index:20;}
+    .back-link:hover{color:var(--gold);}
+    .login-wrap{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px 20px;}
+    .login-logo{height:78px;margin-bottom:22px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));animation:floatIn .7s ease both;}
+    .login-title{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:4px;color:var(--gold);text-align:center;margin-bottom:4px;animation:floatIn .7s ease both .1s;}
+    .login-sub{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:3px;color:rgba(255,255,255,.32);text-transform:uppercase;text-align:center;margin-bottom:34px;animation:floatIn .7s ease both .15s;}
+    .login-card{background:linear-gradient(160deg,rgba(75,0,130,.7),rgba(45,0,77,.92));border:1px solid rgba(245,168,0,.25);border-radius:16px;padding:38px 34px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:floatIn .7s ease both .2s;}
+    .form-group{margin-bottom:20px;}
+    label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.48);margin-bottom:7px;}
+    input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:13px 15px;color:var(--white);font-family:'Barlow',sans-serif;font-size:1rem;outline:none;transition:border-color .2s,background .2s;}
+    input:focus{border-color:var(--gold);background:rgba(245,168,0,.07);}
+    .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),#e09600);border:none;border-radius:8px;color:var(--purple-dark);font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:3px;cursor:pointer;transition:all .2s;margin-top:8px;}
+    .login-btn:hover{background:linear-gradient(135deg,#FFD044,var(--gold));transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,168,0,.32);}
+    .error-msg{display:none;background:rgba(220,50,50,.15);border:1px solid rgba(220,50,50,.4);border-radius:8px;padding:10px 14px;color:#ff8080;font-size:.875rem;text-align:center;margin-bottom:16px;}
+    @keyframes floatIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+    .shake{animation:shake .4s ease;}
+  </style>
+</head>
+<body>
+  <div class="rail-top"></div>
+  <a class="back-link" href="../index.html">← Back to Site</a>
+  <div class="login-wrap">
+    <img class="login-logo" src="../logo.png" alt="Laurel Locomotives" />
+    <div class="login-title">Admin Portal</div>
+    <div class="login-sub">Laurel High School — Staff Only</div>
+    <div class="login-card">
+      <div class="error-msg" id="error-msg">Invalid username or password.</div>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" autocomplete="username" placeholder="Enter username" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="Enter password" />
+      </div>
+      <button class="login-btn" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../config.js"></script>
+  <script>
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // Already logged in? Skip to dashboard.
+    if (sessionStorage.getItem("lhs_admin")) window.location.href = "dashboard.html";
+
+    document.addEventListener("keydown", e => { if(e.key==="Enter") doLogin(); });
+
+    async function doLogin() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      // Check super-admin (hardcoded)
+      if (username === SUPER_ADMIN_USER && password === SUPER_ADMIN_PASS) {
+        sessionStorage.setItem("lhs_admin", JSON.stringify({ username, role:"superadmin" }));
+        window.location.href = "dashboard.html";
+        return;
+      }
+
+      // Check Supabase admin_accounts table
+      try {
+        const { data, error } = await sb
+          .from("admin_accounts")
+          .select("username, password_plain")
+          .eq("username", username)
+          .single();
+
+        if (!error && data && data.password_plain === password) {
+          sessionStorage.setItem("lhs_admin", JSON.stringify({ username, role:"admin" }));
+          window.location.href = "dashboard.html";
+          return;
+        }
+      } catch(e) { console.error(e); }
+
+      // Failed
+      document.getElementById("error-msg").style.display = "block";
+      const card = document.querySelector(".login-card");
+      card.classList.remove("shake");
+      void card.offsetWidth;
+      card.classList.add("shake");
+    }
+  </script>
+</body>
+</html>

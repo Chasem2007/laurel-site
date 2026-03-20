@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Laurel High Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --purple:#4B0082; --purple-dark:#2d004d; --purple-mid:#6a0dad;
+      --gold:#F5A800; --gold-light:#FFD044; --white:#ffffff;
+      --bg:#0f0020; --surface:rgba(75,0,130,.45); --border:rgba(245,168,0,.2);
+      --text-dim:rgba(255,255,255,.45); --danger:#e03535; --success:#2db56e;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--white);font-family:'Barlow',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(-20deg,transparent,transparent 80px,rgba(75,0,130,.1) 80px,rgba(75,0,130,.1) 82px);pointer-events:none;z-index:0;}
+
+    /* TOPBAR */
+    .topbar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,var(--purple-dark),var(--purple));border-bottom:3px solid var(--gold);display:flex;align-items:center;justify-content:space-between;padding:11px 30px;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+    .topbar-left{display:flex;align-items:center;gap:13px;}
+    .topbar-left img{height:42px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));}
+    .topbar-left .title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:3px;color:var(--gold);}
+    .topbar-left .subtitle{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;}
+    .topbar-right{display:flex;align-items:center;gap:12px;}
+    .user-badge{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:1px;color:rgba(255,255,255,.48);}
+    .user-badge span{color:var(--gold);font-weight:700;}
+    .role-chip{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid;}
+    .role-chip.superadmin{color:var(--gold);border-color:var(--gold);background:rgba(245,168,0,.1);}
+    .role-chip.admin{color:rgba(255,255,255,.55);border-color:rgba(255,255,255,.2);}
+    .btn-topbar{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.38);background:none;border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:5px 13px;cursor:pointer;text-decoration:none;transition:all .2s;}
+    .btn-topbar:hover{color:var(--gold);border-color:var(--gold);}
+    .btn-topbar.danger:hover{color:var(--danger);border-color:var(--danger);}
+
+    /* LAYOUT */
+    .layout{position:relative;z-index:5;display:grid;grid-template-columns:210px 1fr;flex:1;}
+
+    /* SIDEBAR */
+    .sidebar{background:linear-gradient(180deg,rgba(45,0,77,.92),rgba(15,0,32,.92));border-right:1px solid rgba(245,168,0,.13);padding:26px 0;}
+    .nav-section{margin-bottom:26px;}
+    .nav-section-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);padding:0 18px;margin-bottom:8px;}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:10px 18px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:600;letter-spacing:1px;color:rgba(255,255,255,.48);transition:all .2s;border-left:3px solid transparent;text-decoration:none;}
+    .nav-item:hover,.nav-item.active{color:var(--gold);background:rgba(245,168,0,.07);border-left-color:var(--gold);}
+    .nav-item .icon{font-size:.95rem;width:20px;text-align:center;}
+
+    /* MAIN */
+    .main{padding:30px;overflow-y:auto;}
+
+    /* PANELS */
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;}
+    .panel-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:3px;color:var(--gold);}
+    .panel-title span{color:var(--white);}
+
+    /* CARDS */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px;}
+    .card-title{font-family:'Barlow Condensed',sans-serif;font-size:.76rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:16px;}
+
+    /* FORM */
+    .field{margin-bottom:16px;}
+    .field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+    .field input,.field textarea,.field select{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:11px 13px;color:var(--white);font-family:'Barlow',sans-serif;font-size:.93rem;outline:none;transition:border-color .2s,background .2s;}
+    .field textarea{min-height:108px;resize:vertical;}
+    .field input:focus,.field textarea:focus{border-color:var(--gold);background:rgba(245,168,0,.06);}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .btn-gold{background:linear-gradient(135deg,var(--gold),#e09600);color:var(--purple-dark);}
+    .btn-gold:hover{background:linear-gradient(135deg,var(--gold-light),var(--gold));transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,168,0,.3);}
+    .btn-outline{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);}
+    .btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+    .btn-danger{background:rgba(220,53,53,.15);border:1px solid rgba(220,53,53,.38);color:#ff8888;}
+    .btn-danger:hover{background:rgba(220,53,53,.3);}
+    .btn-sm{padding:5px 13px;font-size:.72rem;}
+
+    /* POSTS LIST */
+    .posts-list{display:flex;flex-direction:column;gap:12px;}
+    .post-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:17px 19px;display:flex;align-items:flex-start;gap:14px;transition:border-color .2s;}
+    .post-item:hover{border-color:rgba(245,168,0,.24);}
+    .post-item-content{flex:1;}
+    .post-item-title{font-family:'Barlow Condensed',sans-serif;font-size:1.03rem;font-weight:700;color:var(--white);margin-bottom:3px;}
+    .post-item-meta{font-size:.73rem;color:var(--text-dim);margin-bottom:5px;}
+    .post-item-meta .author{color:var(--gold);}
+    .post-item-body{font-size:.84rem;color:rgba(255,255,255,.52);line-height:1.5;}
+    .post-item-actions{display:flex;gap:7px;align-items:center;flex-shrink:0;}
+    .no-items{text-align:center;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;letter-spacing:2px;padding:38px;border:1px dashed rgba(255,255,255,.1);border-radius:10px;}
+
+    /* RSS */
+    .rss-box{display:flex;align-items:center;gap:11px;background:rgba(245,168,0,.07);border:1px solid rgba(245,168,0,.28);border-radius:10px;padding:14px 16px;}
+    .rss-url{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:.83rem;color:var(--gold);word-break:break-all;}
+    .rss-copy-btn{background:rgba(245,168,0,.14);border:1px solid rgba(245,168,0,.38);border-radius:6px;padding:6px 13px;color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:.73rem;letter-spacing:1px;cursor:pointer;flex-shrink:0;transition:all .2s;}
+    .rss-copy-btn:hover{background:rgba(245,168,0,.28);}
+
+    /* ACCOUNTS */
+    .account-item{display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:13px 16px;}
+    .account-item .acct-name{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:.98rem;font-weight:600;}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--success);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:.88rem;letter-spacing:1px;padding:11px 20px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .toast.error{background:var(--danger);}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;align-items:center;justify-content:center;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:linear-gradient(160deg,rgba(75,0,130,.96),rgba(45,0,77,.99));border:1px solid rgba(245,168,0,.3);border-radius:14px;padding:30px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:floatIn .3s ease;}
+    .modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:3px;color:var(--gold);margin-bottom:20px;}
+    .modal-actions{display:flex;gap:9px;margin-top:18px;justify-content:flex-end;}
+
+    /* SPINNER */
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes floatIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+    @media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.main{padding:18px}}
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <img src="../logo.png" alt="Logo" />
+    <div>
+      <div class="title">Admin Dashboard</div>
+      <div class="subtitle">Laurel High School</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="user-badge">Signed in as <span id="topbar-user">—</span></div>
+    <div class="role-chip" id="topbar-role">—</div>
+    <a href="../index.html" class="btn-topbar">View Site</a>
+    <button class="btn-topbar danger" onclick="logout()">Log Out</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-section-label">Content</div>
+      <a class="nav-item active" onclick="showPanel('posts');return false;" href="#">
+        <span class="icon">📢</span> Announcements
+      </a>
+      <a class="nav-item" onclick="showPanel('new-post');return false;" href="#">
+        <span class="icon">✏️</span> New Post
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Feed</div>
+      <a class="nav-item" onclick="showPanel('rss');return false;" href="#">
+        <span class="icon">📡</span> RSS Feed
+      </a>
+    </div>
+    <div class="nav-section" id="admin-section" style="display:none">
+      <div class="nav-section-label">Super Admin</div>
+      <a class="nav-item" onclick="showPanel('accounts');return false;" href="#">
+        <span class="icon">👥</span> Manage Accounts
+      </a>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- PANEL: POSTS -->
+    <div class="panel active" id="panel-posts">
+      <div class="panel-header">
+        <div class="panel-title">My <span>Announcements</span></div>
+        <button class="btn btn-gold" onclick="showPanel('new-post')">+ New Post</button>
+      </div>
+      <div class="posts-list" id="posts-list">
+        <div class="no-items"><span class="spinner"></span> Loading posts…</div>
+      </div>
+    </div>
+
+    <!-- PANEL: NEW / EDIT POST -->
+    <div class="panel" id="panel-new-post">
+      <div class="panel-header">
+        <div class="panel-title" id="post-form-title">New <span>Announcement</span></div>
+      </div>
+      <div class="card">
+        <input type="hidden" id="edit-post-id" />
+        <div class="field">
+          <label>Post Title *</label>
+          <input type="text" id="post-title" placeholder="e.g., Prom tickets on sale!" />
+        </div>
+        <div class="field">
+          <label>Message Body *</label>
+          <textarea id="post-body" placeholder="Write your announcement here…"></textarea>
+        </div>
+        <div class="field">
+          <label>Category (optional)</label>
+          <input type="text" id="post-category" placeholder="e.g., Events, Athletics, Academics" />
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-gold" onclick="savePost()">💾 Publish</button>
+          <button class="btn btn-outline" onclick="showPanel('posts')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: RSS -->
+    <div class="panel" id="panel-rss">
+      <div class="panel-header">
+        <div class="panel-title">RSS <span>Feed</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📡 Live RSS Feed URL</div>
+        <p style="font-size:.875rem;color:rgba(255,255,255,.52);margin-bottom:14px;line-height:1.6;">
+          Point your announcement board or digital signage to this URL. It updates automatically whenever a post is published, edited, or deleted — from any computer.
+        </p>
+        <div class="rss-box">
+          <span style="font-size:1.3rem;">🔗</span>
+          <span class="rss-url" id="rss-url-display">Loading…</span>
+          <button class="rss-copy-btn" onclick="copyRss()">Copy URL</button>
+        </div>
+        <p style="margin-top:14px;font-size:.78rem;color:rgba(255,255,255,.28);">
+          This is a live RSS 2.0 feed served directly from Supabase via your Netlify site. Any RSS reader or digital signage system can subscribe to this URL.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Live Feed Preview</div>
+        <pre id="rss-preview" style="font-size:.7rem;color:rgba(255,255,255,.48);overflow-x:auto;white-space:pre-wrap;line-height:1.6;max-height:380px;overflow-y:auto;"><span class="spinner"></span> Loading…</pre>
+      </div>
+    </div>
+
+    <!-- PANEL: ACCOUNTS (super admin only) -->
+    <div class="panel" id="panel-accounts">
+      <div class="panel-header">
+        <div class="panel-title">Manage <span>Accounts</span></div>
+        <button class="btn btn-gold" onclick="openCreateAccountModal()">+ Create Account</button>
+      </div>
+      <div class="card">
+        <div class="card-title">🔐 Built-in Super Admin</div>
+        <div class="account-item">
+          <span class="acct-name">chase</span>
+          <div class="role-chip superadmin">Super Admin</div>
+          <span style="font-size:.73rem;color:var(--text-dim);">Built-in — cannot be deleted</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">👤 Admin Accounts</div>
+        <div id="accounts-list" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="no-items"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- CREATE ACCOUNT MODAL -->
+<div class="modal-overlay" id="modal-create-acct">
+  <div class="modal">
+    <div class="modal-title">Create Admin Account</div>
+    <div class="field">
+      <label>Username *</label>
+      <input type="text" id="new-acct-username" placeholder="e.g., jsmith" />
+    </div>
+    <div class="field">
+      <label>Password *</label>
+      <input type="password" id="new-acct-password" placeholder="Choose a password" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="createAccount()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE POST MODAL -->
+<div class="modal-overlay" id="modal-delete-post">
+  <div class="modal">
+    <div class="modal-title">Delete Post?</div>
+    <p style="color:rgba(255,255,255,.62);font-size:.9rem;line-height:1.5;">This will permanently remove the announcement from the site and RSS feed. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeletePost()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE ACCOUNT MODAL -->
+<div class="modal-overlay" id="modal-delete-acct">
+  <div class="modal">
+    <div class="modal-title">Remove Account?</div>
+    <p style="color:rgba(255,255,255,.62);font-size:.9rem;line-height:1.5;">This admin account will be permanently removed. They will no longer be able to log in.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteAccount()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../config.js"></script>
+<script>
+// ── AUTH CHECK ─────────────────────────────────────────────────
+const session = JSON.parse(sessionStorage.getItem("lhs_admin") || "null");
+if (!session) { window.location.href = "index.html"; }
+const isSuperAdmin = session?.role === "superadmin";
+const currentUser  = session?.username || "";
+
+// ── SUPABASE ───────────────────────────────────────────────────
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── TOPBAR SETUP ───────────────────────────────────────────────
+document.getElementById("topbar-user").textContent = currentUser;
+const roleEl = document.getElementById("topbar-role");
+roleEl.textContent = isSuperAdmin ? "Super Admin" : "Admin";
+roleEl.className   = "role-chip " + (isSuperAdmin ? "superadmin" : "admin");
+if (isSuperAdmin) document.getElementById("admin-section").style.display = "block";
+
+// ── RSS URL ────────────────────────────────────────────────────
+// The feed.xml route is served by a Netlify Edge Function (feed.js).
+// On the RSS panel we show the full absolute URL.
+const RSS_URL = window.location.origin + "/feed.xml";
+
+// ── PANEL SWITCHING ────────────────────────────────────────────
+function showPanel(name) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("panel-" + name).classList.add("active");
+
+  const map = { posts:0, "new-post":1, rss:2, accounts:3 };
+  document.querySelectorAll(".nav-item")[map[name]]?.classList.add("active");
+
+  if (name === "posts")    loadPosts();
+  if (name === "rss")      loadRssPanel();
+  if (name === "accounts") loadAccounts();
+  if (name === "new-post") resetPostForm();
+}
+
+// ── POSTS ──────────────────────────────────────────────────────
+async function loadPosts() {
+  const container = document.getElementById("posts-list");
+  container.innerHTML = '<div class="no-items"><span class="spinner"></span> Loading…</div>';
+
+  const { data, error } = await sb
+    .from("posts")
+    .select("*")
+    .eq("author", currentUser)
+    .order("created_at", { ascending: false });
+
+  if (error) { container.innerHTML = `<div class="no-items">Error loading posts: ${error.message}</div>`; return; }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="no-items">No posts yet. Create your first announcement!</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(p => `
+    <div class="post-item">
+      <div class="post-item-content">
+        <div class="post-item-title">${esc(p.title)}</div>
+        <div class="post-item-meta">
+          <span class="author">${esc(p.author)}</span> &nbsp;·&nbsp;
+          ${new Date(p.created_at).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}
+          ${p.category ? ` &nbsp;·&nbsp; <em>${esc(p.category)}</em>` : ""}
+        </div>
+        <div class="post-item-body">${esc(p.body)}</div>
+      </div>
+      <div class="post-item-actions">
+        <button class="btn btn-outline btn-sm" onclick="editPost('${p.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="askDeletePost('${p.id}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function resetPostForm() {
+  document.getElementById("edit-post-id").value  = "";
+  document.getElementById("post-title").value    = "";
+  document.getElementById("post-body").value     = "";
+  document.getElementById("post-category").value = "";
+  document.getElementById("post-form-title").innerHTML = 'New <span>Announcement</span>';
+}
+
+async function editPost(id) {
+  const { data, error } = await sb.from("posts").select("*").eq("id", id).single();
+  if (error || !data) { showToast("Could not load post.", true); return; }
+
+  document.getElementById("edit-post-id").value  = data.id;
+  document.getElementById("post-title").value    = data.title;
+  document.getElementById("post-body").value     = data.body;
+  document.getElementById("post-category").value = data.category || "";
+  document.getElementById("post-form-title").innerHTML = 'Edit <span>Announcement</span>';
+  showPanel("new-post");
+}
+
+async function savePost() {
+  const title    = document.getElementById("post-title").value.trim();
+  const body     = document.getElementById("post-body").value.trim();
+  const category = document.getElementById("post-category").value.trim();
+  const editId   = document.getElementById("edit-post-id").value;
+
+  if (!title || !body) { showToast("Title and message are required.", true); return; }
+
+  if (editId) {
+    const { error } = await sb.from("posts")
+      .update({ title, body, category, updated_at: new Date().toISOString() })
+      .eq("id", editId)
+      .eq("author", currentUser);  // safety: can only edit own posts
+    if (error) { showToast("Error saving post: " + error.message, true); return; }
+    showToast("Announcement updated!");
+  } else {
+    const { error } = await sb.from("posts")
+      .insert({ title, body, category, author: currentUser });
+    if (error) { showToast("Error publishing: " + error.message, true); return; }
+    showToast("Announcement published!");
+  }
+
+  showPanel("posts");
+}
+
+let pendingDeletePostId = null;
+function askDeletePost(id) {
+  pendingDeletePostId = id;
+  document.getElementById("modal-delete-post").classList.add("open");
+}
+async function confirmDeletePost() {
+  if (!pendingDeletePostId) return;
+  const { error } = await sb.from("posts")
+    .delete()
+    .eq("id", pendingDeletePostId)
+    .eq("author", currentUser);
+  if (error) { showToast("Error deleting post.", true); }
+  else { showToast("Post deleted."); }
+  pendingDeletePostId = null;
+  closeModal();
+  loadPosts();
+}
+
+// ── RSS PANEL ──────────────────────────────────────────────────
+async function loadRssPanel() {
+  document.getElementById("rss-url-display").textContent = RSS_URL;
+
+  const pre = document.getElementById("rss-preview");
+  pre.innerHTML = '<span class="spinner"></span> Loading feed…';
+
+  const { data, error } = await sb
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) { pre.textContent = "Error loading feed: " + error.message; return; }
+
+  pre.textContent = buildRssXml(data || []);
+}
+
+function buildRssXml(posts) {
+  const items = posts.map(p => `
+  <item>
+    <title><![CDATA[${p.title}]]></title>
+    <description><![CDATA[${p.body}]]></description>
+    <author>${p.author}</author>
+    ${p.category ? `<category>${p.category}</category>` : ""}
+    <pubDate>${new Date(p.created_at).toUTCString()}</pubDate>
+    <guid isPermaLink="false">${p.id}</guid>
+  </item>`).join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Laurel High School Announcements</title>
+    <link>${window.location.origin}</link>
+    <description>Official announcements from Laurel High School — Go Locomotives!</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="${RSS_URL}" rel="self" type="application/rss+xml" />
+${items}
+  </channel>
+</rss>`;
+}
+
+function copyRss() {
+  navigator.clipboard.writeText(RSS_URL).then(() => showToast("RSS URL copied!"));
+}
+
+// ── ACCOUNTS (super admin only) ────────────────────────────────
+async function loadAccounts() {
+  if (!isSuperAdmin) return;
+  const container = document.getElementById("accounts-list");
+  container.innerHTML = '<div class="no-items"><span class="spinner"></span> Loading…</div>';
+
+  const { data, error } = await sb.from("admin_accounts").select("id, username");
+
+  if (error) { container.innerHTML = `<div class="no-items">Error: ${error.message}</div>`; return; }
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="no-items">No additional admin accounts yet.</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(a => `
+    <div class="account-item">
+      <span class="acct-name">${esc(a.username)}</span>
+      <div class="role-chip admin">Admin</div>
+      <button class="btn btn-danger btn-sm" onclick="askDeleteAccount('${a.id}','${esc(a.username)}')">Remove</button>
+    </div>
+  `).join("");
+}
+
+function openCreateAccountModal() {
+  document.getElementById("new-acct-username").value = "";
+  document.getElementById("new-acct-password").value = "";
+  document.getElementById("modal-create-acct").classList.add("open");
+}
+
+async function createAccount() {
+  const username = document.getElementById("new-acct-username").value.trim().toLowerCase();
+  const password = document.getElementById("new-acct-password").value;
+
+  if (!username || !password) { showToast("Username and password required.", true); return; }
+  if (username === SUPER_ADMIN_USER) { showToast("That username is reserved.", true); return; }
+
+  const { error } = await sb.from("admin_accounts").insert({ username, password_plain: password });
+  if (error) {
+    showToast(error.code === "23505" ? "Username already exists." : "Error: " + error.message, true);
+    return;
+  }
+
+  closeModal();
+  loadAccounts();
+  showToast("Admin account created!");
+}
+
+let pendingDeleteAcctId = null;
+function askDeleteAccount(id, username) {
+  pendingDeleteAcctId = id;
+  document.getElementById("modal-delete-acct").classList.add("open");
+}
+async function confirmDeleteAccount() {
+  if (!pendingDeleteAcctId) return;
+  const { error } = await sb.from("admin_accounts").delete().eq("id", pendingDeleteAcctId);
+  if (error) showToast("Error removing account.", true);
+  else showToast("Account removed.");
+  pendingDeleteAcctId = null;
+  closeModal();
+  loadAccounts();
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function closeModal() {
+  document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("open"));
+}
+document.querySelectorAll(".modal-overlay").forEach(m => {
+  m.addEventListener("click", e => { if (e.target === m) closeModal(); });
+});
+
+// ── TOAST ──────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, isErr = false) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast" + (isErr ? " error" : "") + " show";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ── LOGOUT ─────────────────────────────────────────────────────
+function logout() {
+  sessionStorage.removeItem("lhs_admin");
+  window.location.href = "index.html";
+}
+
+// ── UTILS ──────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+loadPosts();
+</script>
+</body>
+</html>
