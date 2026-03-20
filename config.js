@@ -22,4 +22,4 @@ const END_OF_YEAR_LABEL = "Last Day of School";
 
 // Super-admin credentials (checked client-side)
 const SUPER_ADMIN_USER = "chase";
-const SUPER_ADMIN_PASS = "admin123";
+const SUPER_ADMIN_PASS = "Smilingsquash479$";

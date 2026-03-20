@@ -81,12 +81,12 @@
       try {
         const { data, error } = await sb
           .from("admin_accounts")
-          .select("username, password_plain, can_create_users")
+          .select("id, username, password_plain, can_create_users")
           .eq("username", username)
           .single();
 
         if (!error && data && data.password_plain === password) {
-          localStorage.setItem("lhs_admin", JSON.stringify({ username, role:"admin", canCreateUsers: !!data.can_create_users }));
+          localStorage.setItem("lhs_admin", JSON.stringify({ id: data.id, username, role:"admin", canCreateUsers: !!data.can_create_users }));
           window.location.href = "dashboard.html";
           return;
         }

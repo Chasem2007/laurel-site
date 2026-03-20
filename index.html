@@ -272,7 +272,7 @@
     try {
       const { data, error } = await sb
         .from("posts")
-        .select("*")
+        .select("*, admin_accounts(username)")
         .order("created_at", { ascending: false })
         .limit(6);
 
