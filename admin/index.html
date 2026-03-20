@@ -62,17 +62,17 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
     // Already logged in? Skip to dashboard.
-    if (sessionStorage.getItem("lhs_admin")) window.location.href = "dashboard.html";
+    if (localStorage.getItem("lhs_admin")) window.location.href = "dashboard.html";
 
     document.addEventListener("keydown", e => { if(e.key==="Enter") doLogin(); });
 
     async function doLogin() {
-      const username = document.getElementById("username").value.trim();
+      const username = document.getElementById("username").value.trim().toLowerCase();
       const password = document.getElementById("password").value;
 
       // Check super-admin (hardcoded)
       if (username === SUPER_ADMIN_USER && password === SUPER_ADMIN_PASS) {
-        sessionStorage.setItem("lhs_admin", JSON.stringify({ username, role:"superadmin" }));
+        localStorage.setItem("lhs_admin", JSON.stringify({ username, role:"superadmin" }));
         window.location.href = "dashboard.html";
         return;
       }
@@ -86,7 +86,7 @@
           .single();
 
         if (!error && data && data.password_plain === password) {
-          sessionStorage.setItem("lhs_admin", JSON.stringify({ username, role:"admin", canCreateUsers: !!data.can_create_users }));
+          localStorage.setItem("lhs_admin", JSON.stringify({ username, role:"admin", canCreateUsers: !!data.can_create_users }));
           window.location.href = "dashboard.html";
           return;
         }

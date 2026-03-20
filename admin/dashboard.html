@@ -175,7 +175,7 @@
     <!-- POSTS -->
     <div class="panel active" id="panel-posts">
       <div class="p-head">
-        <div class="p-title">My <span>Announcements</span></div>
+        <div class="p-title" id="posts-panel-title">My <span>Announcements</span></div>
         <button class="btn btn-gold" onclick="showPanel('new-post')">+ New Post</button>
       </div>
       <div class="posts-list" id="posts-list">
@@ -416,7 +416,7 @@
 <script src="../config.js"></script>
 <script>
 // AUTH
-const session = JSON.parse(sessionStorage.getItem("lhs_admin") || "null");
+const session = JSON.parse(localStorage.getItem("lhs_admin") || "null");
 if (!session) { window.location.href = "index.html"; }
 const isSuperAdmin  = session?.role === "superadmin";
 const canCreateUsers = isSuperAdmin || session?.canCreateUsers === true;
@@ -466,15 +466,24 @@ function showPanel(name) {
 async function loadPosts() {
   const c = document.getElementById("posts-list");
   c.innerHTML = '<div class="no-items"><span class="spin"></span> Loading...</div>';
-  const { data, error } = await sb.from("posts").select("*").eq("author", currentUser).order("created_at", { ascending: false });
+  // Update title based on role
+  document.getElementById("posts-panel-title").innerHTML = isSuperAdmin ? 'All <span>Announcements</span>' : 'My <span>Announcements</span>';
+  // Super admin sees ALL posts from everyone; regular admins only see their own
+  let query = sb.from("posts").select("*").order("created_at", { ascending: false });
+  if (!isSuperAdmin) query = query.eq("author", currentUser);
+  const { data, error } = await query;
   if (error) { c.innerHTML = '<div class="no-items">Error: ' + error.message + '</div>'; return; }
   if (!data || !data.length) { c.innerHTML = '<div class="no-items">No posts yet. Create your first announcement!</div>'; return; }
+  // Super admin sees whose post is whose with a colored badge
   c.innerHTML = data.map(p => `
     <div class="post-item">
       <div class="pi-content">
         <div class="pi-title">${esc(p.title)}</div>
         <div class="pi-meta">
-          <span class="auth">${esc(p.author)}</span> &nbsp;&middot;&nbsp;
+          ${isSuperAdmin
+            ? `<span style="background:rgba(245,168,0,.15);border:1px solid rgba(245,168,0,.35);color:var(--gold);padding:1px 8px;border-radius:20px;font-size:.68rem;letter-spacing:1px;margin-right:6px;">${esc(p.author)}</span>`
+            : `<span class="auth">${esc(p.author)}</span> &nbsp;&middot;&nbsp;`
+          }
           ${new Date(p.created_at).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"})}
           ${p.category ? ' &nbsp;&middot;&nbsp; <em>' + esc(p.category) + '</em>' : ''}
         </div>
@@ -513,7 +522,9 @@ async function savePost() {
   const editId   = document.getElementById("edit-post-id").value;
   if (!title) { showToast("Ticker message is required.", true); return; }
   if (editId) {
-    const { error } = await sb.from("posts").update({ title, body, category, updated_at: new Date().toISOString() }).eq("id", editId).eq("author", currentUser);
+    let upQuery = sb.from("posts").update({ title, body, category, updated_at: new Date().toISOString() }).eq("id", editId);
+    if (!isSuperAdmin) upQuery = upQuery.eq("author", currentUser);
+    const { error } = await upQuery;
     if (error) { showToast("Error: " + error.message, true); return; }
     showToast("Post updated!");
   } else {
@@ -528,7 +539,9 @@ let pendingDelPostId = null;
 function askDelPost(id) { pendingDelPostId = id; document.getElementById("modal-del-post").classList.add("open"); }
 async function confirmDelPost() {
   if (!pendingDelPostId) return;
-  const { error } = await sb.from("posts").delete().eq("id", pendingDelPostId).eq("author", currentUser);
+  let delQuery = sb.from("posts").delete().eq("id", pendingDelPostId);
+  if (!isSuperAdmin) delQuery = delQuery.eq("author", currentUser);
+  const { error } = await delQuery;
   pendingDelPostId = null; closeModal();
   if (error) showToast("Error deleting.", true); else { showToast("Post deleted."); loadPosts(); }
 }
@@ -688,7 +701,7 @@ async function changeUsername() {
   // Update session
   currentUser = newUser;
   session.username = newUser;
-  sessionStorage.setItem("lhs_admin", JSON.stringify(session));
+  localStorage.setItem("lhs_admin", JSON.stringify(session));
   refreshTopbar();
   resetProfileForm();
   showToast("Username updated to " + newUser + "!");
@@ -738,7 +751,7 @@ function showToast(msg, isErr = false) {
 }
 
 // ── LOGOUT ──────────────────────────────────────────────────
-function logout() { sessionStorage.removeItem("lhs_admin"); window.location.href = "index.html"; }
+function logout() { localStorage.removeItem("lhs_admin"); window.location.href = "index.html"; }
 
 // ── UTILS ───────────────────────────────────────────────────
 function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
