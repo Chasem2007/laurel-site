@@ -57,6 +57,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="../config.js"></script>
+  <!-- config.js lives one folder up from /admin/ — the ../ path is correct here -->
   <script>
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 

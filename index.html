@@ -219,7 +219,7 @@
 
 <!-- Load Supabase then config then app logic -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../config.js"></script>
+<script src="config.js"></script>
 <script>
   // ── INIT SUPABASE ──────────────────────────────────────────
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -230,35 +230,37 @@
 
   function switchTab(tab) {
     currentTab = tab;
-    document.querySelectorAll(".tab-btn").forEach((b,i) =>
-      b.classList.toggle("active", (i===0&&tab==="graduation")||(i===1&&tab==="endofyear"))
-    );
-    clearInterval(countdownInterval);
+    document.querySelectorAll(".tab-btn").forEach((b, i) => {
+      b.classList.toggle("active", (i === 0 && tab === "graduation") || (i === 1 && tab === "endofyear"));
+    });
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
     startCountdown();
   }
 
   function startCountdown() {
     const isGrad = currentTab === "graduation";
-    const target = new Date(isGrad ? GRADUATION_DATE : END_OF_YEAR_DATE);
+    const targetStr = isGrad ? GRADUATION_DATE : END_OF_YEAR_DATE;
+    const target = new Date(targetStr);
     const label  = isGrad ? GRADUATION_LABEL : END_OF_YEAR_LABEL;
 
     document.getElementById("event-name-display").textContent = label;
     document.getElementById("date-label-text").textContent = isGrad ? "Graduation Date" : "Last Day of School";
-    document.getElementById("date-display").textContent = target.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+    document.getElementById("date-display").textContent = target.toLocaleDateString("en-US", {weekday:"long", year:"numeric", month:"long", day:"numeric"});
 
     function tick() {
-      const diff = new Date(isGrad ? GRADUATION_DATE : END_OF_YEAR_DATE) - new Date();
+      const diff = new Date(targetStr) - new Date();
       if (diff <= 0) {
         document.getElementById("countdown-grid").style.display = "none";
         document.getElementById("event-passed").style.display = "block";
-        clearInterval(countdownInterval); return;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        return;
       }
       document.getElementById("countdown-grid").style.display = "grid";
       document.getElementById("event-passed").style.display = "none";
-      document.getElementById("days").textContent    = String(Math.floor(diff/86400000)).padStart(2,"0");
-      document.getElementById("hours").textContent   = String(Math.floor(diff%86400000/3600000)).padStart(2,"0");
-      document.getElementById("minutes").textContent = String(Math.floor(diff%3600000/60000)).padStart(2,"0");
-      document.getElementById("seconds").textContent = String(Math.floor(diff%60000/1000)).padStart(2,"0");
+      document.getElementById("days").textContent    = String(Math.floor(diff / 86400000)).padStart(2, "0");
+      document.getElementById("hours").textContent   = String(Math.floor(diff % 86400000 / 3600000)).padStart(2, "0");
+      document.getElementById("minutes").textContent = String(Math.floor(diff % 3600000 / 60000)).padStart(2, "0");
+      document.getElementById("seconds").textContent = String(Math.floor(diff % 60000 / 1000)).padStart(2, "0");
     }
     tick();
     countdownInterval = setInterval(tick, 1000);

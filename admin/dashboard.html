@@ -142,22 +142,22 @@
   <aside class="sidebar">
     <div class="nav-section">
       <div class="nav-section-label">Content</div>
-      <a class="nav-item active" onclick="showPanel('posts');return false;" href="#">
+      <a class="nav-item active" data-panel="posts" onclick="showPanel('posts');return false;" href="#">
         <span class="icon">📢</span> Announcements
       </a>
-      <a class="nav-item" onclick="showPanel('new-post');return false;" href="#">
+      <a class="nav-item" data-panel="new-post" onclick="showPanel('new-post');return false;" href="#">
         <span class="icon">✏️</span> New Post
       </a>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Feed</div>
-      <a class="nav-item" onclick="showPanel('rss');return false;" href="#">
+      <a class="nav-item" data-panel="rss" onclick="showPanel('rss');return false;" href="#">
         <span class="icon">📡</span> RSS Feed
       </a>
     </div>
     <div class="nav-section" id="admin-section" style="display:none">
       <div class="nav-section-label">Super Admin</div>
-      <a class="nav-item" onclick="showPanel('accounts');return false;" href="#">
+      <a class="nav-item" data-panel="accounts" onclick="showPanel('accounts');return false;" href="#">
         <span class="icon">👥</span> Manage Accounts
       </a>
     </div>
@@ -231,8 +231,26 @@
     <div class="panel" id="panel-accounts">
       <div class="panel-header">
         <div class="panel-title">Manage <span>Accounts</span></div>
-        <button class="btn btn-gold" onclick="openCreateAccountModal()">+ Create Account</button>
+        <button class="btn btn-gold" onclick="openCreateAccountModal()">+ Create Admin Account</button>
       </div>
+
+      <!-- How it works explanation -->
+      <div class="card" style="border-color:rgba(245,168,0,0.5); background:rgba(245,168,0,0.06);">
+        <div class="card-title" style="color:var(--gold-light);">ℹ️ How Admin Accounts Work</div>
+        <p style="font-size:.875rem;color:rgba(255,255,255,.65);line-height:1.7;margin-bottom:10px;">
+          As <strong style="color:var(--gold);">Super Admin</strong>, you are the only one who can create or remove admin accounts. Here's how to give a staff member access to post announcements:
+        </p>
+        <ol style="font-size:.875rem;color:rgba(255,255,255,.65);line-height:2;padding-left:1.4rem;">
+          <li>Click <strong style="color:var(--white);">+ Create Admin Account</strong> above</li>
+          <li>Enter a username (e.g. <code style="background:rgba(255,255,255,.1);padding:1px 6px;border-radius:4px;">msmith</code>) and a password for that staff member</li>
+          <li>Click <strong style="color:var(--white);">Create Account</strong></li>
+          <li>Give that staff member the username &amp; password — they log in at <code style="background:rgba(255,255,255,.1);padding:1px 6px;border-radius:4px;">/admin</code></li>
+        </ol>
+        <p style="font-size:.8rem;color:rgba(255,255,255,.4);margin-top:10px;">
+          Admin accounts can only see and manage their own posts. They cannot see other admins' posts or access this Manage Accounts page.
+        </p>
+      </div>
+
       <div class="card">
         <div class="card-title">🔐 Built-in Super Admin</div>
         <div class="account-item">
@@ -241,6 +259,7 @@
           <span style="font-size:.73rem;color:var(--text-dim);">Built-in — cannot be deleted</span>
         </div>
       </div>
+
       <div class="card">
         <div class="card-title">👤 Admin Accounts</div>
         <div id="accounts-list" style="display:flex;flex-direction:column;gap:10px;">
@@ -259,17 +278,23 @@
 <div class="modal-overlay" id="modal-create-acct">
   <div class="modal">
     <div class="modal-title">Create Admin Account</div>
+    <p style="font-size:.85rem;color:rgba(255,255,255,.55);margin-bottom:20px;line-height:1.6;">
+      Create a login for a staff member. They will be able to post, edit, and delete their own announcements.
+    </p>
     <div class="field">
-      <label>Username *</label>
-      <input type="text" id="new-acct-username" placeholder="e.g., jsmith" />
+      <label>Username * <span style="font-weight:400;color:rgba(255,255,255,.3);font-size:.65rem;letter-spacing:1px;">(lowercase, no spaces — e.g. msmith)</span></label>
+      <input type="text" id="new-acct-username" placeholder="e.g. msmith" autocomplete="off"
+             onkeydown="if(event.key==='Enter') createAccount()" />
     </div>
     <div class="field">
-      <label>Password *</label>
-      <input type="password" id="new-acct-password" placeholder="Choose a password" />
+      <label>Password * <span style="font-weight:400;color:rgba(255,255,255,.3);font-size:.65rem;letter-spacing:1px;">(share this with the staff member)</span></label>
+      <input type="password" id="new-acct-password" placeholder="Choose a password"
+             onkeydown="if(event.key==='Enter') createAccount()" />
     </div>
+    <div id="create-acct-error" style="display:none;background:rgba(220,50,50,.15);border:1px solid rgba(220,50,50,.4);border-radius:8px;padding:9px 13px;color:#ff8080;font-size:.85rem;margin-bottom:12px;"></div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-gold" onclick="createAccount()">Create Account</button>
+      <button class="btn btn-gold" onclick="createAccount()">✓ Create Account</button>
     </div>
   </div>
 </div>
@@ -324,12 +349,18 @@ const RSS_URL = window.location.origin + "/feed.xml";
 
 // ── PANEL SWITCHING ────────────────────────────────────────────
 function showPanel(name) {
+  // Hide all panels
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  // Remove active from all nav items
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-  document.getElementById("panel-" + name).classList.add("active");
 
-  const map = { posts:0, "new-post":1, rss:2, accounts:3 };
-  document.querySelectorAll(".nav-item")[map[name]]?.classList.add("active");
+  // Show the target panel
+  const panelEl = document.getElementById("panel-" + name);
+  if (panelEl) panelEl.classList.add("active");
+
+  // Highlight the matching nav item using data-panel attribute (works even when items are hidden)
+  const navEl = document.querySelector(`.nav-item[data-panel="${name}"]`);
+  if (navEl) navEl.classList.add("active");
 
   if (name === "posts")    loadPosts();
   if (name === "rss")      loadRssPanel();
@@ -510,25 +541,38 @@ async function loadAccounts() {
 function openCreateAccountModal() {
   document.getElementById("new-acct-username").value = "";
   document.getElementById("new-acct-password").value = "";
+  document.getElementById("create-acct-error").style.display = "none";
   document.getElementById("modal-create-acct").classList.add("open");
+  // Focus the username field after modal opens
+  setTimeout(() => document.getElementById("new-acct-username").focus(), 50);
 }
 
 async function createAccount() {
   const username = document.getElementById("new-acct-username").value.trim().toLowerCase();
   const password = document.getElementById("new-acct-password").value;
+  const errEl    = document.getElementById("create-acct-error");
 
-  if (!username || !password) { showToast("Username and password required.", true); return; }
-  if (username === SUPER_ADMIN_USER) { showToast("That username is reserved.", true); return; }
+  function showErr(msg) {
+    errEl.textContent = msg;
+    errEl.style.display = "block";
+  }
+
+  errEl.style.display = "none";
+
+  if (!username) { showErr("Please enter a username."); return; }
+  if (!password) { showErr("Please enter a password."); return; }
+  if (username === SUPER_ADMIN_USER) { showErr("That username is reserved."); return; }
+  if (/\s/.test(username)) { showErr("Username cannot contain spaces."); return; }
 
   const { error } = await sb.from("admin_accounts").insert({ username, password_plain: password });
   if (error) {
-    showToast(error.code === "23505" ? "Username already exists." : "Error: " + error.message, true);
+    showErr(error.code === "23505" ? "That username is already taken. Choose a different one." : "Error: " + error.message);
     return;
   }
 
   closeModal();
   loadAccounts();
-  showToast("Admin account created!");
+  showToast("✓ Account created for " + username);
 }
 
 let pendingDeleteAcctId = null;
