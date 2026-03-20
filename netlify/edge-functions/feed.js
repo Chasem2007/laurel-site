@@ -1,9 +1,6 @@
 // netlify/edge-functions/feed.js
-// This runs on Netlify's edge network and returns a live RSS feed
-// built from your Supabase posts table.
-//
-// It reads SUPABASE_URL and SUPABASE_ANON from Netlify environment
-// variables (set these in Netlify → Site Settings → Environment Variables).
+// Serves a live RSS 2.0 feed from Supabase.
+// Only the <title> field is populated per item - perfect for ticker displays.
 
 export default async (request, context) => {
   const SUPABASE_URL  = Deno.env.get("SUPABASE_URL")  || "";
@@ -13,8 +10,7 @@ export default async (request, context) => {
     return new Response("Supabase not configured.", { status: 500 });
   }
 
-  // Fetch latest 50 posts from Supabase REST API
-  const apiUrl = `${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=50`;
+  const apiUrl = `${SUPABASE_URL}/rest/v1/posts?select=id,title,created_at&order=created_at.desc&limit=50`;
   const res = await fetch(apiUrl, {
     headers: {
       "apikey": SUPABASE_ANON,
@@ -23,19 +19,16 @@ export default async (request, context) => {
   });
 
   if (!res.ok) {
-    return new Response("Error fetching posts.", { status: 502 });
+    return new Response("Error fetching posts from database.", { status: 502 });
   }
 
   const posts = await res.json();
-
   const siteUrl = new URL(request.url).origin;
 
+  // Only title + pubDate + guid per item - body is intentionally excluded for ticker use
   const items = posts.map(p => `
     <item>
-      <title><![CDATA[${escape(p.title)}]]></title>
-      <description><![CDATA[${escape(p.body)}]]></description>
-      <author>${escape(p.author)}</author>
-      ${p.category ? `<category>${escape(p.category)}</category>` : ""}
+      <title><![CDATA[${xmlEsc(p.title)}]]></title>
       <pubDate>${new Date(p.created_at).toUTCString()}</pubDate>
       <guid isPermaLink="false">${p.id}</guid>
     </item>`).join("\n");
@@ -45,7 +38,7 @@ export default async (request, context) => {
   <channel>
     <title>Laurel High School Announcements</title>
     <link>${siteUrl}</link>
-    <description>Official announcements from Laurel High School — Go Locomotives!</description>
+    <description>Laurel High School ticker feed - Go Locomotives!</description>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml" />
@@ -56,13 +49,13 @@ ${items}
   return new Response(xml, {
     headers: {
       "Content-Type": "application/rss+xml; charset=UTF-8",
-      "Cache-Control": "public, max-age=60",
+      "Cache-Control": "public, max-age=30",
       "Access-Control-Allow-Origin": "*",
     }
   });
 };
 
-function escape(str) {
+function xmlEsc(str) {
   return String(str || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
