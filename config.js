@@ -15,8 +15,8 @@ const SUPABASE_ANON = "sb_publishable_9Pw9vq16L50v5BQSMdfGCw_SbdOzHRj";
 
 // ── Countdown dates ──────────────────────────────────────────
 // Format: "YYYY-MM-DDTHH:MM:SS"  (24-hour, local school time)
-const GRADUATION_DATE  = "2025-05-31T13:00:00";
-const END_OF_YEAR_DATE = "2025-06-06T12:00:00";
+const GRADUATION_DATE  = "2026-05-31T13:00:00";
+const END_OF_YEAR_DATE = "2026-06-06T12:00:00";
 
 const GRADUATION_LABEL  = "Graduation Ceremony";
 const END_OF_YEAR_LABEL = "Last Day of School";
